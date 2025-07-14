@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
-import SearchBar from "@/components/molecules/SearchBar";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import SearchBar from "@/components/molecules/SearchBar";
 import ClientModal from "@/components/molecules/ClientModal";
 import { getAllClients } from "@/services/api/clientService";
 
@@ -20,7 +20,7 @@ const Clients = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const loadClients = async () => {
+const loadClients = async () => {
     try {
       setLoading(true);
       setError("");
@@ -32,11 +32,12 @@ const Clients = () => {
     } finally {
       setLoading(false);
     }
-};
+  };
 
   const handleClientCreated = (newClient) => {
     setClients(prev => [...prev, newClient]);
-};
+    loadClients(); // Refresh the client list to ensure UI updates
+  };
 
   const handleClientClick = (clientId) => {
     navigate(`/clients/${clientId}`);
