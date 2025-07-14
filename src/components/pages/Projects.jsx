@@ -53,7 +53,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
     setIsModalOpen(true);
   };
 
-  const handleProjectSubmit = async (projectData) => {
+const handleProjectSubmit = async (projectData) => {
     try {
       if (editingProject) {
         // Handle project update
@@ -61,6 +61,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
         toast.success("Project updated successfully");
       } else {
         // Handle project creation
+        await createProject(projectData);
         await loadProjects();
         toast.success("Project created successfully");
       }
