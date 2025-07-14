@@ -13,6 +13,7 @@ import ProjectDetail from "@/components/pages/ProjectDetail";
 import Tasks from "@/components/pages/Tasks";
 import TimeTracking from "@/components/pages/TimeTracking";
 import Invoices from "@/components/pages/Invoices";
+import Notifications from "@/components/pages/Notifications";
 import Login from '@/components/pages/Login';
 import Signup from '@/components/pages/Signup';
 import Callback from '@/components/pages/Callback';
@@ -140,9 +141,10 @@ function App() {
                   <Route path="/clients/:id" element={<ClientDetail />} />
                   <Route path="/projects" element={<Projects />} />
                   <Route path="/projects/:id" element={<ProjectDetail />} />
-                  <Route path="/tasks" element={<Tasks />} />
+<Route path="/tasks" element={<Tasks />} />
                   <Route path="/time-tracking" element={<TimeTracking />} />
                   <Route path="/invoices" element={<Invoices />} />
+                  <Route path="/notifications" element={<Notifications />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/callback" element={<Callback />} />

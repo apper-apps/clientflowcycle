@@ -37,8 +37,9 @@ const navigationItems = [
     { to: "/", icon: "LayoutDashboard", label: "Dashboard" },
     { to: "/clients", icon: "Users", label: "Clients", badge: "12" },
     { to: "/projects", icon: "FolderOpen", label: "Projects", badge: "8" },
-    { to: "/tasks", icon: "CheckSquare", label: "Tasks", badge: "24" },
+{ to: "/tasks", icon: "CheckSquare", label: "Tasks", badge: "24" },
     { to: "/time-tracking", icon: "Timer", label: "Time Tracking", badge: "2" },
+    { to: "/notifications", icon: "Bell", label: "Notifications" },
     { to: "/invoices", icon: "FileText", label: "Invoices", badge: "5" }
   ];
 
