@@ -116,15 +116,27 @@ const getClientName = (clientId) => {
     return <Error message={error} onRetry={loadProjects} />;
   }
 
-  if (projects.length === 0) {
+if (projects.length === 0) {
     return (
-      <Empty
-        title="No Projects Yet"
-        description="Create your first project to start tracking your work"
-        icon="FolderOpen"
-actionLabel="Create Project"
-        onAction={() => setIsModalOpen(true)}
-      />
+      <div>
+        <Empty
+          title="No Projects Yet"
+          description="Create your first project to start tracking your work"
+          icon="FolderOpen"
+          actionLabel="Create Project"
+          onAction={() => setIsModalOpen(true)}
+        />
+        
+        {/* Project Modal - Always render when no projects */}
+        <ProjectModal 
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSubmit={handleProjectSubmit}
+          project={editingProject}
+          title={editingProject ? "Edit Project" : "Create New Project"}
+          clients={clients}
+        />
+      </div>
     );
   }
 
