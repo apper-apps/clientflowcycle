@@ -217,15 +217,28 @@ const getStatusIcon = (status) => {
     setDropdownOpen(null);
   };
 
-  const handleSaveTask = async () => {
+const handleSaveTask = async () => {
     try {
+      setLoading(true);
+      
+      // Ensure loading state is visible for at least 300ms for better UX
+      const startTime = Date.now();
       await updateTask(selectedTask.Id, editFormData);
       await loadTasks();
+      const elapsedTime = Date.now() - startTime;
+      const minimumLoadTime = 300;
+      
+      if (elapsedTime < minimumLoadTime) {
+        await new Promise(resolve => setTimeout(resolve, minimumLoadTime - elapsedTime));
+      }
+      
       setEditModalOpen(false);
       setSelectedTask(null);
       toast.success("Task updated successfully");
     } catch (error) {
       toast.error("Failed to update task");
+    } finally {
+      setLoading(false);
     }
   };
 
