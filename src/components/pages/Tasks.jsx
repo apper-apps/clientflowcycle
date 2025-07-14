@@ -73,7 +73,8 @@ const [editModalOpen, setEditModalOpen] = useState(false);
     }
 };
 
-  useEffect(() => {
+useEffect(() => {
+    // Initialize page by loading all tasks
     loadTasks();
   }, []);
 
