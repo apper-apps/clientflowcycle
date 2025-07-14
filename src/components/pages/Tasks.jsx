@@ -59,11 +59,21 @@ const [editModalOpen, setEditModalOpen] = useState(false);
     }
   };
   
-  const loadTasks = async () => {
+const loadTasks = async () => {
     try {
       setLoading(true);
       setError("");
+      
+      // Ensure loading state is visible for at least 300ms for better UX
+      const startTime = Date.now();
       const taskData = await getAllTasks();
+      const elapsedTime = Date.now() - startTime;
+      const minimumLoadTime = 300;
+      
+      if (elapsedTime < minimumLoadTime) {
+        await new Promise(resolve => setTimeout(resolve, minimumLoadTime - elapsedTime));
+      }
+      
       setTasks(taskData);
     } catch (err) {
       setError("Failed to load tasks. Please try again.");
@@ -71,7 +81,7 @@ const [editModalOpen, setEditModalOpen] = useState(false);
     } finally {
       setLoading(false);
     }
-};
+  };
 
 useEffect(() => {
     // Initialize page by loading all tasks
