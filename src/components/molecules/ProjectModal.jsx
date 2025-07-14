@@ -230,8 +230,8 @@ const getClientName = (clientId) => {
           )}
         </div>
 
-        {/* Status and Budget Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+{/* Status and Budget Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {/* Status */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -271,8 +271,8 @@ const getClientName = (clientId) => {
           </div>
         </div>
 
-        {/* Date Range */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+{/* Date Range */}
+        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {/* Start Date */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -312,13 +312,14 @@ const getClientName = (clientId) => {
           </div>
         )}
 
-        {/* Form Actions */}
-        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+{/* Form Actions */}
+        <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
             disabled={loading}
+            className="w-full sm:w-auto order-2 sm:order-1"
           >
             Cancel
           </Button>
@@ -326,6 +327,7 @@ const getClientName = (clientId) => {
             type="submit"
             loading={loading}
             disabled={loading}
+            className="w-full sm:w-auto order-1 sm:order-2"
           >
             {project ? 'Update Project' : 'Create Project'}
           </Button>
