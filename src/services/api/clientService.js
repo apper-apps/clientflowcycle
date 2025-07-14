@@ -78,10 +78,10 @@ export const createClient = async (clientData) => {
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
     });
     
-    // Only include updateable fields
+// Only include updateable fields
     const params = {
       records: [{
-        Name: clientData.name,
+        Name: clientData.Name,
         email: clientData.email,
         company: clientData.company,
         status: clientData.status || 'active',
@@ -129,11 +129,11 @@ export const updateClient = async (id, clientData) => {
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
     });
     
-    // Only include updateable fields
+// Only include updateable fields
     const params = {
       records: [{
         Id: parseInt(id),
-        Name: clientData.name,
+        Name: clientData.Name,
         email: clientData.email,
         company: clientData.company,
         status: clientData.status
