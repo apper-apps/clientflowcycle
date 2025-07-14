@@ -14,6 +14,7 @@ import Loading from "@/components/ui/Loading";
 import SearchBar from "@/components/molecules/SearchBar";
 import { getAllTasks, updateTask, deleteTask, createTask } from "@/services/api/taskService";
 import { startTimer, stopTimer } from "@/services/api/timeTrackingService";
+import { getAllProjects } from "@/services/api/projectService";
 
 const Tasks = () => {
 const [tasks, setTasks] = useState([]);
@@ -37,9 +38,27 @@ const [editModalOpen, setEditModalOpen] = useState(false);
     priority: 'medium',
     status: 'todo',
     dueDate: '',
-    projectId: 1
+    projectId: ''
   });
   const [dropdownOpen, setDropdownOpen] = useState(null);
+  
+  // Projects state for lookup
+  const [projects, setProjects] = useState([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  
+  const loadProjects = async () => {
+    try {
+      setProjectsLoading(true);
+      const projectData = await getAllProjects();
+      setProjects(projectData);
+    } catch (err) {
+      console.error("Failed to load projects:", err);
+      toast.error("Failed to load projects");
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+  
   const loadTasks = async () => {
     try {
       setLoading(true);
@@ -217,15 +236,16 @@ const getStatusIcon = (status) => {
     setDropdownOpen(null);
   };
 
-  const handleAddTask = () => {
+const handleAddTask = async () => {
     setAddTaskFormData({
       title: '',
       description: '',
       priority: 'medium',
       status: 'todo',
       dueDate: '',
-      projectId: 1
+      projectId: ''
     });
+    await loadProjects();
     setAddTaskModalOpen(true);
   };
 
@@ -236,9 +256,10 @@ const getStatusIcon = (status) => {
         return;
       }
       
-      const taskData = {
+const taskData = {
         ...addTaskFormData,
-        dueDate: addTaskFormData.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        dueDate: addTaskFormData.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        projectId: parseInt(addTaskFormData.projectId)
       };
       
       await createTask(taskData);
@@ -250,7 +271,7 @@ const getStatusIcon = (status) => {
         priority: 'medium',
         status: 'todo',
         dueDate: '',
-        projectId: 1
+        projectId: ''
       });
       toast.success("Task created successfully");
     } catch (error) {
@@ -822,6 +843,31 @@ const getStatusIcon = (status) => {
               onChange={(e) => setAddTaskFormData(prev => ({ ...prev, dueDate: e.target.value }))}
               className="w-full"
             />
+</div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Project *
+            </label>
+            {projectsLoading ? (
+              <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm">
+                Loading projects...
+              </div>
+            ) : (
+              <select
+                value={addTaskFormData.projectId}
+                onChange={(e) => setAddTaskFormData(prev => ({ ...prev, projectId: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                required
+              >
+                <option value="">Select a project...</option>
+                {projects.map((project) => (
+                  <option key={project.Id} value={project.Id}>
+                    {project.name || project.Name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -834,7 +880,7 @@ const getStatusIcon = (status) => {
             <Button
               variant="primary"
               onClick={handleCreateTask}
-              disabled={!addTaskFormData.title.trim()}
+disabled={!addTaskFormData.title.trim() || !addTaskFormData.projectId}
             >
               <ApperIcon name="Plus" size={14} className="mr-2" />
               Create Task
