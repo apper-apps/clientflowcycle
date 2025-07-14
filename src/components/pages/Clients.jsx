@@ -61,15 +61,24 @@ const filteredClients = clients.filter(client =>
     return <Error message={error} onRetry={loadClients} />;
   }
 
-  if (clients.length === 0) {
+if (clients.length === 0) {
     return (
-<Empty
-        title="No Clients Yet"
-        description="Start building your client base by adding your first client"
-        icon="Users"
-        actionLabel="Add First Client"
-        onAction={() => setShowModal(true)}
-      />
+      <>
+        <Empty
+          title="No Clients Yet"
+          description="Start building your client base by adding your first client"
+          icon="Users"
+          actionLabel="Add First Client"
+          onAction={() => setShowModal(true)}
+        />
+        
+        {/* Client Modal */}
+        <ClientModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onClientCreated={handleClientCreated}
+        />
+      </>
     );
   }
 
@@ -244,7 +253,7 @@ const filteredClients = clients.filter(client =>
 </motion.div>
       )}
 
-      {/* Client Modal */}
+{/* Client Modal */}
       <ClientModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
