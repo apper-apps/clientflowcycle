@@ -8,7 +8,7 @@ import { createClient, updateClient } from "@/services/api/clientService";
 
 const ClientModal = ({ isOpen, onClose, onClientCreated, onClientUpdated, client, mode = "create" }) => {
 const [formData, setFormData] = useState({
-    name: "",
+    Name: "",
     email: "",
     company: "",
     notes: "",
@@ -21,7 +21,7 @@ const [formData, setFormData] = useState({
   React.useEffect(() => {
     if (mode === "edit" && client) {
       setFormData({
-        name: client.name || "",
+        Name: client.Name || "",
         email: client.email || "",
         company: client.company || "",
         notes: client.notes || "",
@@ -29,7 +29,7 @@ const [formData, setFormData] = useState({
       });
     } else {
       setFormData({
-        name: "",
+        Name: "",
         email: "",
         company: "",
         notes: "",
@@ -55,11 +55,11 @@ const [formData, setFormData] = useState({
     }
   };
 
-  const validateForm = () => {
+const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+    if (!formData.Name.trim()) {
+      newErrors.Name = "Name is required";
     }
     
     if (!formData.email.trim()) {
@@ -86,7 +86,7 @@ const [formData, setFormData] = useState({
 setLoading(true);
     
     try {
-      if (mode === "edit") {
+if (mode === "edit") {
         const updatedClient = await updateClient(client.Id, formData);
         toast.success("Client updated successfully!");
         onClientUpdated?.(updatedClient);
@@ -97,8 +97,8 @@ setLoading(true);
       }
       
       // Reset form
-      setFormData({
-        name: "",
+setFormData({
+        Name: "",
         email: "",
         company: "",
         notes: "",
@@ -117,7 +117,7 @@ setLoading(true);
   const handleClose = () => {
     if (!loading) {
       setFormData({
-        name: "",
+        Name: "",
         email: "",
         company: "",
         notes: "",
@@ -141,17 +141,17 @@ isOpen={isOpen}
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Client Name *
           </label>
-          <Input
-            name="name"
-            value={formData.name}
+<Input
+            name="Name"
+            value={formData.Name}
             onChange={handleInputChange}
             placeholder="Enter client name"
-            error={errors.name}
+            error={errors.Name}
             disabled={loading}
           />
-          {errors.name && (
+          {errors.Name && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {errors.name}
+              {errors.Name}
             </p>
           )}
         </div>
