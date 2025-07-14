@@ -332,7 +332,7 @@ const taskData = {
       toast.error("Failed to duplicate task");
     }
   };
-  if (loading) {
+if (loading) {
     return <Loading />;
   }
 
@@ -340,15 +340,143 @@ const taskData = {
     return <Error message={error} onRetry={loadTasks} />;
   }
 
-if (tasks.length === 0) {
+  if (tasks.length === 0) {
     return (
-      <Empty
-        title="No Tasks Yet"
-        description="Create your first task to start tracking your work"
-        icon="CheckSquare"
-        actionLabel="Add Task"
-        onAction={handleAddTask}
-      />
+      <div className="relative">
+        <Empty
+          title="No Tasks Yet"
+          description="Create your first task to start tracking your work"
+          icon="CheckSquare"
+          actionLabel="Add Task"
+          onAction={handleAddTask}
+        />
+        
+        {/* Add Task Modal - needs to be rendered even in empty state */}
+        <Modal
+          isOpen={addTaskModalOpen}
+          onClose={() => setAddTaskModalOpen(false)}
+          title="Create New Task"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Task Title *
+              </label>
+              <Input
+                type="text"
+                value={addTaskFormData.title}
+                onChange={(e) => setAddTaskFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Enter task title"
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description
+              </label>
+              <textarea
+                value={addTaskFormData.description}
+                onChange={(e) => setAddTaskFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter task description (optional)"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Priority
+                </label>
+                <select
+                  value={addTaskFormData.priority}
+                  onChange={(e) => setAddTaskFormData(prev => ({ ...prev, priority: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Status
+                </label>
+                <select
+                  value={addTaskFormData.status}
+                  onChange={(e) => setAddTaskFormData(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="todo">To Do</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="review">Review</option>
+                  <option value="done">Done</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Due Date
+              </label>
+              <Input
+                type="date"
+                value={addTaskFormData.dueDate}
+                onChange={(e) => setAddTaskFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Project *
+              </label>
+              {projectsLoading ? (
+                <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm">
+                  Loading projects...
+                </div>
+              ) : (
+                <select
+                  value={addTaskFormData.projectId}
+                  onChange={(e) => setAddTaskFormData(prev => ({ ...prev, projectId: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                >
+                  <option value="">Select a project...</option>
+                  {projects.map((project) => (
+                    <option key={project.Id} value={project.Id}>
+                      {typeof (project.name || project.Name) === 'object' 
+                        ? (project.name?.Name || project.Name?.Name || 'Unknown Project')
+                        : (project.name || project.Name || 'Unknown Project')
+                      }
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setAddTaskModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleCreateTask}
+                disabled={!addTaskFormData.title.trim() || !addTaskFormData.projectId}
+              >
+                <ApperIcon name="Plus" size={14} className="mr-2" />
+                Create Task
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      </div>
     );
   }
 
