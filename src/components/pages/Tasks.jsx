@@ -340,14 +340,14 @@ const taskData = {
     return <Error message={error} onRetry={loadTasks} />;
   }
 
-  if (tasks.length === 0) {
+if (tasks.length === 0) {
     return (
       <Empty
         title="No Tasks Yet"
         description="Create your first task to start tracking your work"
         icon="CheckSquare"
         actionLabel="Add Task"
-        onAction={() => toast.info("Add task functionality coming soon!")}
+        onAction={handleAddTask}
       />
     );
   }
