@@ -12,7 +12,7 @@ import Empty from "@/components/ui/Empty";
 import Error from "@/components/ui/Error";
 import Loading from "@/components/ui/Loading";
 import SearchBar from "@/components/molecules/SearchBar";
-import { getAllTasks, updateTask, deleteTask } from "@/services/api/taskService";
+import { getAllTasks, updateTask, deleteTask, createTask } from "@/services/api/taskService";
 import { startTimer, stopTimer } from "@/services/api/timeTrackingService";
 
 const Tasks = () => {
@@ -25,10 +25,20 @@ const [tasks, setTasks] = useState([]);
   const [viewMode, setViewMode] = useState("list");
   const [activeTimers, setActiveTimers] = useState(new Map());
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const [editModalOpen, setEditModalOpen] = useState(false);
+const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
+  const [viewDetailsModalOpen, setViewDetailsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [editFormData, setEditFormData] = useState({});
+  const [addTaskFormData, setAddTaskFormData] = useState({
+    title: '',
+    description: '',
+    priority: 'medium',
+    status: 'todo',
+    dueDate: '',
+    projectId: 1
+  });
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const loadTasks = async () => {
     try {
@@ -199,18 +209,74 @@ const getStatusIcon = (status) => {
     } catch (error) {
       toast.error("Failed to delete task");
     }
-  };
+};
 
   const handleViewDetails = (task) => {
-    toast.info(`Task Details: ${task.title} - Project ID: ${task.projectId}`);
+    setSelectedTask(task);
+    setViewDetailsModalOpen(true);
     setDropdownOpen(null);
   };
 
-  const handleDuplicateTask = (task) => {
-    toast.info("Task duplication will be available in the next update");
-    setDropdownOpen(null);
+  const handleAddTask = () => {
+    setAddTaskFormData({
+      title: '',
+      description: '',
+      priority: 'medium',
+      status: 'todo',
+      dueDate: '',
+      projectId: 1
+    });
+    setAddTaskModalOpen(true);
   };
 
+  const handleCreateTask = async () => {
+    try {
+      if (!addTaskFormData.title.trim()) {
+        toast.error("Task title is required");
+        return;
+      }
+      
+      const taskData = {
+        ...addTaskFormData,
+        dueDate: addTaskFormData.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      };
+      
+      await createTask(taskData);
+      await loadTasks();
+      setAddTaskModalOpen(false);
+      setAddTaskFormData({
+        title: '',
+        description: '',
+        priority: 'medium',
+        status: 'todo',
+        dueDate: '',
+        projectId: 1
+      });
+      toast.success("Task created successfully");
+    } catch (error) {
+      toast.error("Failed to create task");
+    }
+  };
+
+  const handleDuplicateTask = async (task) => {
+    try {
+      const duplicatedTask = {
+        title: `${task.title} (Copy)`,
+        description: task.description || '',
+        priority: task.priority,
+        status: 'todo',
+        dueDate: task.dueDate,
+        projectId: task.projectId
+      };
+      
+      await createTask(duplicatedTask);
+      await loadTasks();
+      setDropdownOpen(null);
+      toast.success("Task duplicated successfully");
+    } catch (error) {
+      toast.error("Failed to duplicate task");
+    }
+  };
   if (loading) {
     return <Loading />;
   }
@@ -274,9 +340,9 @@ const getStatusIcon = (status) => {
               Kanban
             </Button>
 </div>
-          <Button 
+<Button 
             variant="primary"
-            onClick={() => toast.info("Task creation will be available soon. For now, tasks are managed through projects.")}
+            onClick={handleAddTask}
           >
             <ApperIcon name="Plus" size={16} className="mr-2" />
             Add Task
@@ -665,6 +731,213 @@ const getStatusIcon = (status) => {
             </Button>
           </div>
         </div>
+</Modal>
+
+      {/* Add Task Modal */}
+      <Modal
+        isOpen={addTaskModalOpen}
+        onClose={() => setAddTaskModalOpen(false)}
+        title="Create New Task"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Task Title *
+            </label>
+            <Input
+              type="text"
+              value={addTaskFormData.title}
+              onChange={(e) => setAddTaskFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Enter task title"
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description
+            </label>
+            <textarea
+              value={addTaskFormData.description}
+              onChange={(e) => setAddTaskFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Enter task description (optional)"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Priority
+              </label>
+              <select
+                value={addTaskFormData.priority}
+                onChange={(e) => setAddTaskFormData(prev => ({ ...prev, priority: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Status
+              </label>
+              <select
+                value={addTaskFormData.status}
+                onChange={(e) => setAddTaskFormData(prev => ({ ...prev, status: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="todo">To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Due Date
+            </label>
+            <Input
+              type="date"
+              value={addTaskFormData.dueDate}
+              onChange={(e) => setAddTaskFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+              className="w-full"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setAddTaskModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreateTask}
+              disabled={!addTaskFormData.title.trim()}
+            >
+              <ApperIcon name="Plus" size={14} className="mr-2" />
+              Create Task
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* View Details Modal */}
+      <Modal
+        isOpen={viewDetailsModalOpen}
+        onClose={() => setViewDetailsModalOpen(false)}
+        title="Task Details"
+        size="md"
+      >
+        {selectedTask && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {selectedTask.title}
+              </h3>
+              {selectedTask.description && (
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  {selectedTask.description}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Priority
+                </label>
+                <Badge 
+                  variant={getPriorityVariant(selectedTask.priority)} 
+                  className="flex items-center gap-1 w-fit"
+                >
+                  <ApperIcon name={getPriorityIcon(selectedTask.priority)} size={12} />
+                  {selectedTask.priority}
+                </Badge>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Status
+                </label>
+                <Badge 
+                  variant={getStatusVariant(selectedTask.status)}
+                  className="flex items-center gap-1 w-fit"
+                >
+                  <ApperIcon name={getStatusIcon(selectedTask.status)} size={12} />
+                  {selectedTask.status.replace("-", " ")}
+                </Badge>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Due Date
+                </label>
+                <div className="flex items-center gap-2 text-sm text-gray-900 dark:text-white">
+                  <ApperIcon name="Calendar" size={14} />
+                  {new Date(selectedTask.dueDate).toLocaleDateString()}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Project ID
+                </label>
+                <p className="text-sm text-gray-900 dark:text-white">
+                  {selectedTask.projectId}
+                </p>
+              </div>
+            </div>
+
+            {selectedTask.timeTracking && (
+              <div>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Time Tracking
+                </label>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <ApperIcon name="Clock" size={14} />
+                    <span>Total Time: {formatDuration(selectedTask.timeTracking.totalTime || 0)}</span>
+                  </div>
+                  {activeTimers.has(selectedTask.Id) && (
+                    <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mt-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span>Currently Running: {formatDuration(getElapsedTime(selectedTask.Id))}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setViewDetailsModalOpen(false)}
+              >
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setViewDetailsModalOpen(false);
+                  handleEditTask(selectedTask);
+                }}
+              >
+                <ApperIcon name="Edit2" size={14} className="mr-2" />
+                Edit Task
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Click outside to close dropdown */}
