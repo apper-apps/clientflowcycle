@@ -1,8 +1,34 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSelector } from 'react-redux';
 import NavigationItem from "@/components/molecules/NavigationItem";
 import ApperIcon from "@/components/ApperIcon";
 import { useSidebar } from "@/hooks/useSidebar";
+const UserProfileSection = () => {
+  const { user, isAuthenticated } = useSelector((state) => state.user);
+  
+  if (!isAuthenticated || !user) {
+    return null;
+  }
+
+  return (
+    <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-lg">
+        <div className="w-8 h-8 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
+          <ApperIcon name="User" size={16} className="text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            {user.firstName} {user.lastName}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            {user.emailAddress}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Sidebar = () => {
   const { isOpen, closeSidebar } = useSidebar();
@@ -40,21 +66,7 @@ const navigationItems = [
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-lg">
-            <div className="w-8 h-8 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-              <ApperIcon name="User" size={16} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                John Doe
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                Freelancer
-              </p>
-            </div>
-          </div>
-        </div>
+<UserProfileSection />
       </div>
     </div>
   );
@@ -110,21 +122,7 @@ const navigationItems = [
                 ))}
               </nav>
 
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-lg">
-                  <div className="w-8 h-8 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-                    <ApperIcon name="User" size={16} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      John Doe
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      Freelancer
-                    </p>
-                  </div>
-                </div>
-              </div>
+<UserProfileSection />
             </div>
           </motion.div>
         </>

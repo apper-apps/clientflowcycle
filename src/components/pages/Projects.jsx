@@ -77,8 +77,8 @@ const [isModalOpen, setIsModalOpen] = useState(false);
   };
 
 const getClientName = (clientId) => {
-    const client = clients.find(c => c.Id === clientId);
-    return client ? client.name : `Client ID: ${clientId}`;
+    const client = clients.find(c => c.Id === parseInt(clientId));
+    return client ? (client.Name || client.name) : `Client ID: ${clientId}`;
   };
 
   const filteredProjects = projects.filter(project => {

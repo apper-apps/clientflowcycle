@@ -154,7 +154,7 @@ const ProjectModal = ({
 
 const getClientName = (clientId) => {
     const client = clients.find(c => c.Id === parseInt(clientId));
-    return client ? client.name : 'Unknown Client';
+    return client ? (client.Name || client.name) : 'Unknown Client';
   };
 
   return (
@@ -218,9 +218,9 @@ const getClientName = (clientId) => {
               required
             >
 <option value="">Select a client</option>
-              {clients.map(client => (
+{clients.map(client => (
                 <option key={client.Id} value={client.Id}>
-                  {client.name}
+                  {client.Name || client.name}
                 </option>
               ))}
             </select>

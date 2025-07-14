@@ -1,60 +1,211 @@
-import clientsData from "@/services/mockData/clients.json";
-
-let clients = [...clientsData];
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getAllClients = async () => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 200));
-  return [...clients];
+  await delay(200);
+  
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "email" } },
+        { field: { Name: "company" } },
+        { field: { Name: "status" } },
+        { field: { Name: "createdAt" } }
+      ]
+    };
+    
+    const response = await apperClient.fetchRecords('client', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return response.data || [];
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    throw error;
+  }
 };
 
 export const getClientById = async (id) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 150));
-  const client = clients.find(c => c.Id === parseInt(id));
-  if (!client) {
-    throw new Error("Client not found");
+  await delay(150);
+  
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "email" } },
+        { field: { Name: "company" } },
+        { field: { Name: "status" } },
+        { field: { Name: "createdAt" } }
+      ]
+    };
+    
+    const response = await apperClient.getRecordById('client', parseInt(id), params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching client:", error);
+    throw error;
   }
-  return { ...client };
 };
 
 export const createClient = async (clientData) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await delay(300);
   
-const newClient = {
-    ...clientData,
-    Id: Math.max(...clients.map(c => c.Id)) + 1,
-    createdAt: new Date().toISOString(),
-    notes: clientData.notes || ""
-  };
-  
-  clients.push(newClient);
-  return { ...newClient };
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    // Only include updateable fields
+    const params = {
+      records: [{
+        Name: clientData.name,
+        email: clientData.email,
+        company: clientData.company,
+        status: clientData.status || 'active',
+        createdAt: new Date().toISOString()
+      }]
+    };
+    
+    const response = await apperClient.createRecord('client', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to create ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      const successfulRecords = response.results.filter(result => result.success);
+      return successfulRecords[0]?.data;
+    }
+  } catch (error) {
+    console.error("Error creating client:", error);
+    throw error;
+  }
 };
 
 export const updateClient = async (id, clientData) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 250));
+  await delay(250);
   
-  const index = clients.findIndex(c => c.Id === parseInt(id));
-  if (index === -1) {
-    throw new Error("Client not found");
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    // Only include updateable fields
+    const params = {
+      records: [{
+        Id: parseInt(id),
+        Name: clientData.name,
+        email: clientData.email,
+        company: clientData.company,
+        status: clientData.status
+      }]
+    };
+    
+    const response = await apperClient.updateRecord('client', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to update ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      const successfulRecords = response.results.filter(result => result.success);
+      return successfulRecords[0]?.data;
+    }
+  } catch (error) {
+    console.error("Error updating client:", error);
+    throw error;
   }
-  
-  clients[index] = { ...clients[index], ...clientData };
-  return { ...clients[index] };
 };
 
 export const deleteClient = async (id) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 200));
+  await delay(200);
   
-  const index = clients.findIndex(c => c.Id === parseInt(id));
-  if (index === -1) {
-    throw new Error("Client not found");
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    const params = {
+      RecordIds: [parseInt(id)]
+    };
+    
+    const response = await apperClient.deleteRecord('client', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to delete ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      return true;
+    }
+  } catch (error) {
+    console.error("Error deleting client:", error);
+    throw error;
   }
-  
-  clients.splice(index, 1);
-  return true;
 };

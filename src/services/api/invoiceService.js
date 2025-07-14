@@ -1,26 +1,89 @@
-import invoicesData from "@/services/mockData/invoices.json";
-
-let invoices = [...invoicesData];
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getAllInvoices = async () => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 250));
-  return [...invoices];
+  await delay(250);
+  
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "amount" } },
+        { field: { Name: "status" } },
+        { field: { Name: "dueDate" } },
+        { field: { Name: "paymentDate" } },
+        { field: { Name: "client_id" } },
+        { field: { Name: "project_id" } }
+      ]
+    };
+    
+    const response = await apperClient.fetchRecords('app_invoice', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    // Map database field names to expected field names
+    return (response.data || []).map(invoice => ({
+      ...invoice,
+      clientId: invoice.client_id,
+      projectId: invoice.project_id
+    }));
+  } catch (error) {
+    console.error("Error fetching invoices:", error);
+    throw error;
+  }
 };
 
 export const getInvoiceById = async (id) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 150));
-  const invoice = invoices.find(i => i.Id === parseInt(id));
-  if (!invoice) {
-    throw new Error("Invoice not found");
+  await delay(150);
+  
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    const params = {
+      fields: [
+        { field: { Name: "Name" } },
+        { field: { Name: "amount" } },
+        { field: { Name: "status" } },
+        { field: { Name: "dueDate" } },
+        { field: { Name: "paymentDate" } },
+        { field: { Name: "client_id" } },
+        { field: { Name: "project_id" } }
+      ]
+    };
+    
+    const response = await apperClient.getRecordById('app_invoice', parseInt(id), params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    const invoice = response.data;
+    return {
+      ...invoice,
+      clientId: invoice.client_id,
+      projectId: invoice.project_id
+    };
+  } catch (error) {
+    console.error("Error fetching invoice:", error);
+    throw error;
   }
-  return { ...invoice };
 };
 
 export const createInvoice = async (invoiceData) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await delay(300);
   
   // Validate required fields
   if (!invoiceData.projectId) {
@@ -33,36 +96,71 @@ export const createInvoice = async (invoiceData) => {
     throw new Error("Due date is required");
   }
   
-  // Generate next sequential ID
-  const nextId = invoices.length > 0 ? Math.max(...invoices.map(i => i.Id)) + 1 : 1;
-  
-  const newInvoice = {
-    ...invoiceData,
-    Id: nextId,
-    projectId: parseInt(invoiceData.projectId),
-    clientId: invoiceData.clientId || '',
-    amount: parseFloat(invoiceData.amount),
-    status: invoiceData.status || 'draft',
-    dueDate: invoiceData.dueDate,
-    lineItems: invoiceData.lineItems || []
-  };
-  
-  invoices.push(newInvoice);
-  return { ...newInvoice };
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    // Only include updateable fields
+    const params = {
+      records: [{
+        Name: `Invoice for Project ${invoiceData.projectId}`,
+        amount: parseFloat(invoiceData.amount),
+        status: invoiceData.status || 'draft',
+        dueDate: invoiceData.dueDate,
+        client_id: parseInt(invoiceData.clientId),
+        project_id: parseInt(invoiceData.projectId)
+      }]
+    };
+    
+    if (invoiceData.paymentDate) {
+      params.records[0].paymentDate = invoiceData.paymentDate;
+    }
+    
+    const response = await apperClient.createRecord('app_invoice', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to create ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      const successfulRecords = response.results.filter(result => result.success);
+      const invoice = successfulRecords[0]?.data;
+      return {
+        ...invoice,
+        clientId: invoice.client_id,
+        projectId: invoice.project_id,
+        lineItems: invoiceData.lineItems || []
+      };
+    }
+  } catch (error) {
+    console.error("Error creating invoice:", error);
+    throw error;
+  }
 };
 
 export const updateInvoice = async (id, invoiceData) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 250));
+  await delay(250);
   
   const parsedId = parseInt(id);
   if (isNaN(parsedId)) {
     throw new Error("Invalid invoice ID");
-  }
-  
-  const index = invoices.findIndex(i => i.Id === parsedId);
-  if (index === -1) {
-    throw new Error("Invoice not found");
   }
   
   // Validate data if provided
@@ -70,82 +168,120 @@ export const updateInvoice = async (id, invoiceData) => {
     throw new Error("Amount must be greater than 0");
   }
   
-  // Update invoice while preserving ID
-  invoices[index] = { 
-    ...invoices[index], 
-    ...invoiceData,
-    Id: parsedId,
-    projectId: invoiceData.projectId ? parseInt(invoiceData.projectId) : invoices[index].projectId,
-    amount: invoiceData.amount !== undefined ? parseFloat(invoiceData.amount) : invoices[index].amount
-  };
-  
-  return { ...invoices[index] };
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    // Only include updateable fields
+    const updateData = {
+      Id: parsedId
+    };
+    
+    if (invoiceData.amount !== undefined) updateData.amount = parseFloat(invoiceData.amount);
+    if (invoiceData.status) updateData.status = invoiceData.status;
+    if (invoiceData.dueDate) updateData.dueDate = invoiceData.dueDate;
+    if (invoiceData.paymentDate) updateData.paymentDate = invoiceData.paymentDate;
+    if (invoiceData.projectId) updateData.project_id = parseInt(invoiceData.projectId);
+    if (invoiceData.clientId) updateData.client_id = parseInt(invoiceData.clientId);
+    
+    const params = {
+      records: [updateData]
+    };
+    
+    const response = await apperClient.updateRecord('app_invoice', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to update ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          record.errors?.forEach(error => {
+            throw new Error(`${error.fieldLabel}: ${error.message}`);
+          });
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      const successfulRecords = response.results.filter(result => result.success);
+      const invoice = successfulRecords[0]?.data;
+      return {
+        ...invoice,
+        clientId: invoice.client_id,
+        projectId: invoice.project_id
+      };
+    }
+  } catch (error) {
+    console.error("Error updating invoice:", error);
+    throw error;
+  }
 };
 
 export const markInvoiceAsSent = async (id) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const parsedId = parseInt(id);
-  if (isNaN(parsedId)) {
-    throw new Error("Invalid invoice ID");
-  }
-  
-  const index = invoices.findIndex(i => i.Id === parsedId);
-  if (index === -1) {
-    throw new Error("Invoice not found");
-  }
-  
-  if (invoices[index].status !== "draft") {
-    throw new Error("Only draft invoices can be marked as sent");
-  }
-  
-  invoices[index].status = "sent";
-  return { ...invoices[index] };
+  return updateInvoice(id, { status: 'sent' });
 };
 
 export const markInvoiceAsPaid = async (id, paymentDate) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
-  const parsedId = parseInt(id);
-  if (isNaN(parsedId)) {
-    throw new Error("Invalid invoice ID");
-  }
-  
-  const index = invoices.findIndex(i => i.Id === parsedId);
-  if (index === -1) {
-    throw new Error("Invoice not found");
-  }
-  
-  if (invoices[index].status === "paid") {
-    throw new Error("Invoice is already marked as paid");
-  }
-  
   if (!paymentDate) {
     throw new Error("Payment date is required");
   }
   
-  invoices[index].status = "paid";
-  invoices[index].paymentDate = new Date(paymentDate).toISOString();
-  
-  return { ...invoices[index] };
+  return updateInvoice(id, { 
+    status: 'paid',
+    paymentDate: new Date(paymentDate).toISOString()
+  });
 };
 
 export const deleteInvoice = async (id) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 200));
+  await delay(200);
   
   const parsedId = parseInt(id);
   if (isNaN(parsedId)) {
     throw new Error("Invalid invoice ID");
   }
   
-  const index = invoices.findIndex(i => i.Id === parsedId);
-  if (index === -1) {
-    throw new Error("Invoice not found");
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    const params = {
+      RecordIds: [parsedId]
+    };
+    
+    const response = await apperClient.deleteRecord('app_invoice', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const failedRecords = response.results.filter(result => !result.success);
+      
+      if (failedRecords.length > 0) {
+        console.error(`Failed to delete ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
+        
+        failedRecords.forEach(record => {
+          if (record.message) throw new Error(record.message);
+        });
+      }
+      
+      return true;
+    }
+  } catch (error) {
+    console.error("Error deleting invoice:", error);
+    throw error;
   }
-  
-  invoices.splice(index, 1);
-  return true;
 };

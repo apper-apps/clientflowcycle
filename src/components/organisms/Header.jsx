@@ -35,14 +35,14 @@ const Header = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+<div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" className="hidden sm:flex">
             <ApperIcon name="Bell" size={18} className="text-gray-600 dark:text-gray-300" />
           </Button>
           
           <ThemeToggle />
           
-<Button 
+          <Button 
             variant="primary" 
             size="sm" 
             className="hidden sm:flex"
@@ -51,8 +51,26 @@ const Header = () => {
             <ApperIcon name="Plus" size={16} className="mr-2" />
             New Project
           </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hidden sm:flex"
+            onClick={async () => {
+              try {
+                const { ApperUI } = window.ApperSDK;
+                await ApperUI.logout();
+                window.location.href = '/login';
+              } catch (error) {
+                console.error("Logout failed:", error);
+              }
+            }}
+          >
+            <ApperIcon name="LogOut" size={16} className="mr-2" />
+            Logout
+          </Button>
         </div>
-</div>
+      </div>
       
       <ProjectModal
         isOpen={isProjectModalOpen}
