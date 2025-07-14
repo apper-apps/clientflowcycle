@@ -26,6 +26,13 @@ const [tasks, setTasks] = useState([]);
   const [viewMode, setViewMode] = useState("list");
   const [activeTimers, setActiveTimers] = useState(new Map());
   const [currentTime, setCurrentTime] = useState(Date.now());
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  
 const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
@@ -59,14 +66,14 @@ const [editModalOpen, setEditModalOpen] = useState(false);
     }
   };
   
-const loadTasks = async () => {
+const loadTasks = async (page = currentPage, limit = pageSize) => {
     try {
       setLoading(true);
       setError("");
       
       // Ensure loading state is visible for at least 300ms for better UX
       const startTime = Date.now();
-      const taskData = await getAllTasks();
+      const result = await getAllTasks(page, limit);
       const elapsedTime = Date.now() - startTime;
       const minimumLoadTime = 300;
       
@@ -74,7 +81,10 @@ const loadTasks = async () => {
         await new Promise(resolve => setTimeout(resolve, minimumLoadTime - elapsedTime));
       }
       
-      setTasks(taskData);
+      setTasks(result.data);
+      setTotalRecords(result.total);
+      setTotalPages(Math.ceil(result.total / limit));
+      setCurrentPage(page);
     } catch (err) {
       setError("Failed to load tasks. Please try again.");
       toast.error("Failed to load tasks");
@@ -448,7 +458,7 @@ const taskData = {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-sm text-gray-600 dark:text-gray-400"
         >
-          Showing {filteredTasks.length} of {tasks.length} tasks
+          Showing {filteredTasks.length} of {totalRecords} tasks (Page {currentPage} of {totalPages})
         </motion.div>
       )}
 
@@ -659,6 +669,82 @@ const taskData = {
               />
             </motion.div>
 )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      const newPage = currentPage - 1;
+                      setCurrentPage(newPage);
+                      loadTasks(newPage, pageSize);
+                    }
+                  }}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1"
+                >
+                  <ApperIcon name="ChevronLeft" size={14} />
+                  Previous
+                </Button>
+                
+                <div className="flex items-center gap-2 mx-4">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (currentPage < totalPages) {
+                      const newPage = currentPage + 1;
+                      setCurrentPage(newPage);
+                      loadTasks(newPage, pageSize);
+                    }
+                  }}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1"
+                >
+                  Next
+                  <ApperIcon name="ChevronRight" size={14} />
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 dark:text-gray-400">
+                  Show:
+                </label>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    const newPageSize = parseInt(e.target.value);
+                    setPageSize(newPageSize);
+                    setCurrentPage(1);
+                    loadTasks(1, newPageSize);
+                  }}
+                  className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  per page
+                </span>
+              </div>
+            </motion.div>
+          )}
         </>
       )}
 

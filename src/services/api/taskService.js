@@ -1,6 +1,6 @@
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const getAllTasks = async () => {
+export const getAllTasks = async (page = 1, limit = 10) => {
   await delay(200);
   
   try {
@@ -20,7 +20,11 @@ export const getAllTasks = async () => {
         { field: { Name: "total_time" } },
         { field: { Name: "active_timer_start_time" } },
         { field: { Name: "project_id" } }
-      ]
+      ],
+      pagingInfo: {
+        limit: limit,
+        offset: (page - 1) * limit
+      }
     };
     
     const response = await apperClient.fetchRecords('task', params);
@@ -31,7 +35,7 @@ export const getAllTasks = async () => {
     }
     
     // Map database field names to expected field names and add time tracking structure
-    return (response.data || []).map(task => ({
+    const mappedTasks = (response.data || []).map(task => ({
       ...task,
       title: task.title || task.Name,
       projectId: task.project_id?.toString(),
@@ -44,6 +48,14 @@ export const getAllTasks = async () => {
         timeLogs: []
       }
     }));
+    
+    return {
+      data: mappedTasks,
+      total: response.total || 0,
+      page: page,
+      limit: limit,
+      totalPages: Math.ceil((response.total || 0) / limit)
+    };
   } catch (error) {
     console.error("Error fetching tasks:", error);
     throw error;
