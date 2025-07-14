@@ -1,11 +1,12 @@
 import React from "react";
 import StatCard from "@/components/molecules/StatCard";
 
-const DashboardStats = () => {
-  const stats = [
+const DashboardStats = ({ data }) => {
+  // Transform real-time data into stats format
+  const stats = data?.summary ? [
     {
       title: "Total Clients",
-      value: "24",
+      value: data.summary.totalClients?.toString() || "0",
       change: "+12%",
       changeType: "positive",
       icon: "Users",
@@ -13,7 +14,7 @@ const DashboardStats = () => {
     },
     {
       title: "Active Projects",
-      value: "8",
+      value: data.summary.activeProjects?.toString() || "0",
       change: "+2 this week",
       changeType: "positive",
       icon: "FolderOpen",
@@ -21,7 +22,7 @@ const DashboardStats = () => {
     },
     {
       title: "Pending Tasks",
-      value: "47",
+      value: data.summary.pendingTasks?.toString() || "0",
       change: "-8 from yesterday",
       changeType: "negative",
       icon: "CheckSquare",
@@ -29,7 +30,7 @@ const DashboardStats = () => {
     },
     {
       title: "Monthly Revenue",
-      value: "$12,450",
+      value: data.summary.monthlyRevenue ? `$${data.summary.monthlyRevenue.toLocaleString()}` : "$0",
       change: "+18%",
       changeType: "positive",
       icon: "DollarSign",
@@ -37,7 +38,7 @@ const DashboardStats = () => {
     },
     {
       title: "Completed Tasks",
-      value: "156",
+      value: data.summary.completedTasks?.toString() || "0",
       change: "+24 this week",
       changeType: "positive",
       icon: "CheckCircle2",
@@ -45,13 +46,13 @@ const DashboardStats = () => {
     },
     {
       title: "Overdue Items",
-      value: "3",
+      value: data.summary.overdueItems?.toString() || "0",
       change: "2 urgent",
       changeType: "neutral",
       icon: "AlertTriangle",
       delay: 0.5
     }
-  ];
+  ] : [];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

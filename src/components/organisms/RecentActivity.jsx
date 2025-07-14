@@ -4,54 +4,34 @@ import Card from "@/components/atoms/Card";
 import Badge from "@/components/atoms/Badge";
 import ApperIcon from "@/components/ApperIcon";
 
-const RecentActivity = () => {
-  const activities = [
-    {
-      id: 1,
-      type: "project",
-      title: "Project 'Website Redesign' marked as completed",
-      client: "TechCorp Inc",
-      time: "2 hours ago",
-      icon: "CheckCircle2",
-      iconColor: "text-green-500"
-    },
-    {
-      id: 2,
-      type: "task",
-      title: "New task assigned: 'Review wireframes'",
-      client: "StartupXYZ",
-      time: "4 hours ago",
-      icon: "Plus",
-      iconColor: "text-blue-500"
-    },
-    {
-      id: 3,
-      type: "invoice",
-      title: "Invoice #1247 sent to client",
-      client: "Digital Agency",
-      time: "6 hours ago",
-      icon: "FileText",
-      iconColor: "text-purple-500"
-    },
-    {
-      id: 4,
-      type: "client",
-      title: "New client 'Fashion Brand' added",
-      client: "Fashion Brand",
-      time: "1 day ago",
-      icon: "UserPlus",
-      iconColor: "text-emerald-500"
-    },
-    {
-      id: 5,
-      type: "payment",
-      title: "Payment received from TechCorp Inc",
-      client: "TechCorp Inc",
-      time: "2 days ago",
-      icon: "DollarSign",
-      iconColor: "text-green-600"
-    }
-  ];
+const RecentActivity = ({ data }) => {
+  // Use real-time activity data or fallback to empty array
+  const activities = data?.recentActivity || [];
+
+  const getActivityIcon = (type, icon) => {
+    // Use custom icon if provided, otherwise default based on type
+    if (icon) return icon;
+    
+    const typeIcons = {
+      project: "FolderOpen",
+      task: "CheckSquare",
+      invoice: "FileText",
+      client: "Users",
+      payment: "DollarSign"
+    };
+    return typeIcons[type] || "Activity";
+  };
+
+  const getActivityIconColor = (type) => {
+    const colors = {
+      project: "text-blue-500",
+      task: "text-green-500",
+      invoice: "text-purple-500",
+      client: "text-emerald-500",
+      payment: "text-green-600"
+    };
+    return colors[type] || "text-gray-500";
+  };
 
   const getActivityBadge = (type) => {
     const badges = {
@@ -75,9 +55,9 @@ const RecentActivity = () => {
         </div>
       </div>
       
-      <div className="p-6">
+<div className="p-6">
         <div className="space-y-4">
-          {activities.map((activity, index) => (
+          {activities.length > 0 ? activities.map((activity, index) => (
             <motion.div
               key={activity.id}
               initial={{ opacity: 0, x: -20 }}
@@ -85,8 +65,8 @@ const RecentActivity = () => {
               transition={{ duration: 0.3, delay: index * 0.1 }}
               className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
             >
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${activity.iconColor}`}>
-                <ApperIcon name={activity.icon} size={16} />
+              <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${getActivityIconColor(activity.type)}`}>
+                <ApperIcon name={getActivityIcon(activity.type, activity.icon)} size={16} />
               </div>
               
               <div className="flex-1 min-w-0">
@@ -118,8 +98,13 @@ const RecentActivity = () => {
                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200" 
                 />
               </div>
-            </motion.div>
-          ))}
+</motion.div>
+          )) : (
+            <div className="text-center py-8">
+              <ApperIcon name="Activity" size={48} className="mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">No recent activity</p>
+            </div>
+          )}
         </div>
         
         <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
