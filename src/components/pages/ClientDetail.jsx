@@ -10,18 +10,19 @@ import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import ApperIcon from "@/components/ApperIcon";
 import ClientModal from "@/components/molecules/ClientModal";
+import ProjectModal from "@/components/molecules/ProjectModal";
 import { getClientById } from "@/services/api/clientService";
-import { getAllProjects } from "@/services/api/projectService";
+import { getAllProjects, createProject } from "@/services/api/projectService";
 
 const ClientDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [client, setClient] = useState(null);
-  const [projects, setProjects] = useState([]);
+const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
-
+  const [showProjectModal, setShowProjectModal] = useState(false);
   const loadClientData = async () => {
     try {
       setLoading(true);
@@ -52,10 +53,26 @@ const ClientDetail = () => {
     toast.success("Client updated successfully!");
   };
 
-  const handleBackToClients = () => {
+const handleBackToClients = () => {
     navigate("/clients");
   };
 
+  const handleNewProject = () => {
+    setShowProjectModal(true);
+  };
+
+  const handleProjectSubmit = async (projectData) => {
+    try {
+      await createProject(projectData);
+      await loadClientData(); // Refresh the client data and projects
+      setShowProjectModal(false);
+      toast.success("Project created successfully!");
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      toast.error(error.message || 'Failed to create project');
+      throw error; // Re-throw to let ProjectModal handle loading state
+    }
+  };
   useEffect(() => {
     if (id) {
       loadClientData();
@@ -277,7 +294,7 @@ const ClientDetail = () => {
 <Button 
               variant="outline" 
               size="sm"
-              onClick={() => navigate(`/projects?clientId=${client.Id}`)}
+              onClick={handleNewProject}
             >
               <ApperIcon name="Plus" size={16} className="mr-2" />
               New Project
@@ -287,10 +304,10 @@ const ClientDetail = () => {
           {projects.length === 0 ? (
             <Empty
               title="No Projects Yet"
-              description="This client doesn't have any projects yet. Create the first project to get started."
+description="This client doesn't have any projects yet. Create the first project to get started."
               icon="FolderOpen"
               actionLabel="Create Project"
-              onAction={() => {/* TODO: Navigate to create project */}}
+              onAction={handleNewProject}
             />
           ) : (
             <div className="space-y-4">
@@ -336,9 +353,18 @@ const ClientDetail = () => {
       <ClientModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        onClientUpdated={handleClientUpdated}
+onClientUpdated={handleClientUpdated}
         client={client}
         mode="edit"
+      />
+
+      {/* New Project Modal */}
+      <ProjectModal
+        isOpen={showProjectModal}
+        onClose={() => setShowProjectModal(false)}
+        onSubmit={handleProjectSubmit}
+        project={{ clientId: client?.Id }}
+        title="Create New Project"
       />
     </div>
   );
