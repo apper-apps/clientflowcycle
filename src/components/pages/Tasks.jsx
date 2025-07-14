@@ -6,11 +6,13 @@ import ApperIcon from "@/components/ApperIcon";
 import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
+import Modal from "@/components/atoms/Modal";
+import Input from "@/components/atoms/Input";
 import Empty from "@/components/ui/Empty";
 import Error from "@/components/ui/Error";
 import Loading from "@/components/ui/Loading";
 import SearchBar from "@/components/molecules/SearchBar";
-import { getAllTasks } from "@/services/api/taskService";
+import { getAllTasks, updateTask, deleteTask } from "@/services/api/taskService";
 import { startTimer, stopTimer } from "@/services/api/timeTrackingService";
 
 const Tasks = () => {
@@ -23,6 +25,11 @@ const [tasks, setTasks] = useState([]);
   const [viewMode, setViewMode] = useState("list");
   const [activeTimers, setActiveTimers] = useState(new Map());
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
+  const [dropdownOpen, setDropdownOpen] = useState(null);
   const loadTasks = async () => {
     try {
       setLoading(true);
@@ -150,6 +157,58 @@ const getStatusIcon = (status) => {
       done: "CheckCircle2"
     };
     return icons[status] || "Circle";
+};
+
+  const handleEditTask = (task) => {
+    setSelectedTask(task);
+    setEditFormData({
+      title: task.title,
+      priority: task.priority,
+      status: task.status,
+      dueDate: task.dueDate.split('T')[0] // Format for date input
+    });
+    setEditModalOpen(true);
+    setDropdownOpen(null);
+  };
+
+  const handleDeleteTask = (task) => {
+    setSelectedTask(task);
+    setDeleteModalOpen(true);
+    setDropdownOpen(null);
+  };
+
+  const handleSaveTask = async () => {
+    try {
+      await updateTask(selectedTask.Id, editFormData);
+      await loadTasks();
+      setEditModalOpen(false);
+      setSelectedTask(null);
+      toast.success("Task updated successfully");
+    } catch (error) {
+      toast.error("Failed to update task");
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteTask(selectedTask.Id);
+      await loadTasks();
+      setDeleteModalOpen(false);
+      setSelectedTask(null);
+      toast.success("Task deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete task");
+    }
+  };
+
+  const handleViewDetails = (task) => {
+    toast.info(`Task Details: ${task.title} - Project ID: ${task.projectId}`);
+    setDropdownOpen(null);
+  };
+
+  const handleDuplicateTask = (task) => {
+    toast.info("Task duplication will be available in the next update");
+    setDropdownOpen(null);
   };
 
   if (loading) {
@@ -361,13 +420,54 @@ const getStatusIcon = (status) => {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => toast.info("Task editing is available through the Project detail page.")}
+                            onClick={() => handleEditTask(task)}
                           >
                             <ApperIcon name="Edit2" size={14} />
                           </Button>
-                          <Button variant="ghost" size="sm">
-                            <ApperIcon name="MoreHorizontal" size={14} />
-                          </Button>
+                          <div className="relative">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setDropdownOpen(dropdownOpen === task.Id ? null : task.Id)}
+                            >
+                              <ApperIcon name="MoreHorizontal" size={14} />
+                            </Button>
+                            {dropdownOpen === task.Id && (
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
+                                <div className="py-1">
+                                  <button
+                                    onClick={() => handleViewDetails(task)}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                  >
+                                    <ApperIcon name="Eye" size={14} />
+                                    View Details
+                                  </button>
+                                  <button
+                                    onClick={() => handleEditTask(task)}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                  >
+                                    <ApperIcon name="Edit2" size={14} />
+                                    Edit Task
+                                  </button>
+                                  <button
+                                    onClick={() => handleDuplicateTask(task)}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                  >
+                                    <ApperIcon name="Copy" size={14} />
+                                    Duplicate
+                                  </button>
+                                  <hr className="my-1 border-gray-200 dark:border-gray-600" />
+                                  <button
+                                    onClick={() => handleDeleteTask(task)}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                                  >
+                                    <ApperIcon name="Trash2" size={14} />
+                                    Delete Task
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -437,6 +537,142 @@ const getStatusIcon = (status) => {
             </motion.div>
 )}
         </>
+      )}
+
+      {/* Edit Task Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Task"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Task Title
+            </label>
+            <Input
+              type="text"
+              value={editFormData.title || ''}
+              onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Enter task title"
+              className="w-full"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Priority
+              </label>
+              <select
+                value={editFormData.priority || 'medium'}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, priority: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Status
+              </label>
+              <select
+                value={editFormData.status || 'todo'}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="todo">To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Due Date
+            </label>
+            <Input
+              type="date"
+              value={editFormData.dueDate || ''}
+              onChange={(e) => setEditFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+              className="w-full"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setEditModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveTask}
+              disabled={!editFormData.title?.trim()}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Task"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center">
+              <ApperIcon name="AlertTriangle" size={16} className="text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h4 className="font-medium text-red-900 dark:text-red-400">
+                Confirm Deletion
+              </h4>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                This action cannot be undone.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-gray-600 dark:text-gray-400">
+            Are you sure you want to delete the task "{selectedTask?.title}"? All associated time tracking data will also be removed.
+          </p>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="error"
+              onClick={handleConfirmDelete}
+            >
+              <ApperIcon name="Trash2" size={14} className="mr-2" />
+              Delete Task
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Click outside to close dropdown */}
+      {dropdownOpen && (
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setDropdownOpen(null)}
+        />
       )}
     </div>
   );
