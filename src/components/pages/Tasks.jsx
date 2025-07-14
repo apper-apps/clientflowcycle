@@ -498,25 +498,34 @@ const getStatusIcon = (status) => {
                             >
                               <ApperIcon name="MoreHorizontal" size={14} />
                             </Button>
-                            {dropdownOpen === task.Id && (
+{dropdownOpen === task.Id && (
                               <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
                                 <div className="py-1">
                                   <button
-                                    onClick={() => handleViewDetails(task)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleViewDetails(task);
+                                    }}
                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                                   >
                                     <ApperIcon name="Eye" size={14} />
                                     View Details
                                   </button>
                                   <button
-                                    onClick={() => handleEditTask(task)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditTask(task);
+                                    }}
                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                                   >
                                     <ApperIcon name="Edit2" size={14} />
                                     Edit Task
                                   </button>
                                   <button
-                                    onClick={() => handleDuplicateTask(task)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDuplicateTask(task);
+                                    }}
                                     className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                                   >
                                     <ApperIcon name="Copy" size={14} />
@@ -524,7 +533,10 @@ const getStatusIcon = (status) => {
                                   </button>
                                   <hr className="my-1 border-gray-200 dark:border-gray-600" />
                                   <button
-                                    onClick={() => handleDeleteTask(task)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteTask(task);
+                                    }}
                                     className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                                   >
                                     <ApperIcon name="Trash2" size={14} />
