@@ -126,8 +126,10 @@ const getStatusIcon = (status) => {
     setPaymentDate("");
   };
 const handleNewInvoiceClick = () => {
+    console.log('Create Invoice button clicked'); // Debug logging
     setEditingInvoice(null);
     setIsInvoiceModalOpen(true);
+    setError(""); // Clear any previous errors
   };
 
   const handleEditInvoice = (invoice) => {
@@ -146,18 +148,22 @@ const handleNewInvoiceClick = () => {
     setEditingInvoice(null);
   };
 
-  const handleInvoiceSubmit = async (invoiceData) => {
+const handleInvoiceSubmit = async (invoiceData) => {
     try {
+      console.log('Invoice submission started:', invoiceData); // Debug logging
       if (editingInvoice) {
         // Handle invoice update logic here
         await loadInvoices();
         toast.success("Invoice updated successfully");
       } else {
+        console.log('Creating new invoice...'); // Debug logging
         await createInvoice(invoiceData);
         await loadInvoices();
         toast.success("Invoice created successfully");
       }
     } catch (error) {
+      console.error('Invoice submission error:', error); // Enhanced error logging
+      toast.error(`Failed to ${editingInvoice ? 'update' : 'create'} invoice: ${error.message}`);
       throw error;
     }
   };
