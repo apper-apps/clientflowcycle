@@ -1,5 +1,4 @@
-import { startTaskTimer, stopTaskTimer, getTaskTimeLogs } from "@/services/api/taskService";
-import { getAllTasks } from "@/services/api/taskService";
+import { getAllTasks, getTaskTimeLogs, startTaskTimer, stopTaskTimer } from "@/services/api/taskService";
 
 export const startTimer = async (taskId) => {
   try {
@@ -72,7 +71,7 @@ export const getActiveTimer = async (taskId) => {
 
     return response.data[0];
   } catch (error) {
-    if (error?.response?.data?.message) {
+if (error?.response?.data?.message) {
       console.error("Error getting active timer:", error?.response?.data?.message);
       throw new Error(error?.response?.data?.message);
     } else {
@@ -80,14 +79,6 @@ export const getActiveTimer = async (taskId) => {
       throw new Error(`Failed to get active timer: ${error.message}`);
     }
   }
-  const tasks = await getAllTasks();
-  const task = tasks.find(t => t.Id === parseInt(taskId));
-  
-  if (!task) {
-    throw new Error("Task not found");
-  }
-
-  return task.timeTracking?.activeTimer || null;
 };
 
 export const getTimeLogs = async (taskId) => {
@@ -200,54 +191,14 @@ export const getProjectTimeTracking = async (projectId) => {
       timeLogs: processedLogs.slice(0, 10)
     };
   } catch (error) {
-    if (error?.response?.data?.message) {
+if (error?.response?.data?.message) {
       console.error("Error getting project time tracking:", error?.response?.data?.message);
       throw new Error(error?.response?.data?.message);
     } else {
       console.error("Error getting project time tracking:", error);
       throw new Error(`Failed to get project time tracking: ${error.message}`);
     }
-  }
-  try {
-    const tasks = await getAllTasks();
-    const projectTasks = tasks.filter(t => t.projectId === String(projectId));
-    
-    let totalTime = 0;
-    let activeTimers = 0;
-    let totalEntries = 0;
-    const timeLogs = [];
-
-    projectTasks.forEach(task => {
-      if (task.timeTracking) {
-        totalTime += task.timeTracking.totalTime || 0;
-        
-        if (task.timeTracking.activeTimer) {
-          activeTimers++;
-        }
-        
-        if (task.timeTracking.timeLogs) {
-          totalEntries += task.timeTracking.timeLogs.length;
-          timeLogs.push(...task.timeTracking.timeLogs.map(log => ({
-            ...log,
-            taskId: task.Id,
-            taskTitle: task.title
-          })));
-        }
-      }
-    });
-
-    // Sort time logs by date (newest first)
-    timeLogs.sort((a, b) => new Date(b.endTime) - new Date(a.endTime));
-
-    return {
-      totalTime,
-      activeTimers,
-      totalEntries,
-      timeLogs: timeLogs.slice(0, 10) // Return last 10 entries
-    };
-  } catch (error) {
-    throw new Error(`Failed to get project time tracking: ${error.message}`);
-  }
+}
 };
 
 export const getAllTimeTracking = async () => {
@@ -350,54 +301,12 @@ export const getAllTimeTracking = async () => {
 
     return summary;
   } catch (error) {
-    if (error?.response?.data?.message) {
+if (error?.response?.data?.message) {
       console.error("Error getting all time tracking data:", error?.response?.data?.message);
       throw new Error(error?.response?.data?.message);
     } else {
       console.error("Error getting all time tracking data:", error);
       throw new Error(`Failed to get all time tracking data: ${error.message}`);
     }
-  }
-  try {
-    const tasks = await getAllTasks();
-    
-    const summary = {
-      totalTime: 0,
-      activeTimers: 0,
-      totalEntries: 0,
-      taskBreakdown: []
-    };
-
-    tasks.forEach(task => {
-      if (task.timeTracking) {
-        summary.totalTime += task.timeTracking.totalTime || 0;
-        
-        if (task.timeTracking.activeTimer) {
-          summary.activeTimers++;
-        }
-        
-        if (task.timeTracking.timeLogs) {
-          summary.totalEntries += task.timeTracking.timeLogs.length;
-        }
-
-        if (task.timeTracking.totalTime > 0 || task.timeTracking.activeTimer) {
-          summary.taskBreakdown.push({
-            taskId: task.Id,
-            taskTitle: task.title,
-            projectId: task.projectId,
-            totalTime: task.timeTracking.totalTime || 0,
-            hasActiveTimer: !!task.timeTracking.activeTimer,
-            entryCount: task.timeTracking.timeLogs?.length || 0
-          });
-        }
-      }
-    });
-
-    // Sort by total time descending
-    summary.taskBreakdown.sort((a, b) => b.totalTime - a.totalTime);
-
-    return summary;
-  } catch (error) {
-    throw new Error(`Failed to get all time tracking data: ${error.message}`);
-  }
+}
 };
