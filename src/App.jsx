@@ -156,7 +156,8 @@ function App() {
             </div>
           </div>
         ) : (
-          <Routes>
+<Routes>
+            <Route path="/tasks" element={<Tasks />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/callback" element={<Callback />} />
