@@ -199,6 +199,74 @@ export const createTask = async (taskData) => {
   }
 };
 
+export const updateTaskStatus = async (taskId, newStatus) => {
+  await delay(250);
+  
+  try {
+    const { ApperClient } = window.ApperSDK;
+    const apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
+    
+    // Get current user from Redux store
+    const state = window.__REDUX_STORE__?.getState();
+    const currentUser = state?.user?.user;
+    
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    // First, get the current task to check ownership
+    const currentTask = await getTaskById(taskId);
+    if (!currentTask) {
+      throw new Error("Task not found");
+    }
+    
+    // Check if current user is the creator
+    if (currentTask.createdByUserId !== currentUser.userId) {
+      throw new Error("You can only edit your own tasks");
+    }
+    
+    const params = {
+      records: [{
+        Id: parseInt(taskId),
+        status: newStatus
+      }]
+    };
+    
+    const response = await apperClient.updateRecord('task', params);
+    
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+    
+    if (response.results) {
+      const successful = response.results.filter(r => r.success);
+      if (successful.length > 0) {
+        const task = successful[0].data;
+        return {
+          ...task,
+          title: task.title || task.Name,
+          projectId: task.project_id?.toString(),
+          timeTracking: {
+            totalTime: task.total_time || 0,
+            activeTimer: task.active_timer_start_time ? {
+              Id: task.Id,
+              startTime: task.active_timer_start_time
+            } : null,
+            timeLogs: []
+          }
+        };
+      }
+    }
+  } catch (error) {
+    console.error("Error updating task status:", error);
+    throw error;
+  }
+};
+
 export const updateTask = async (id, taskData) => {
   await delay(250);
   
