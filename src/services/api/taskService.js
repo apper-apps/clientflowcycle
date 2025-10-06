@@ -262,7 +262,7 @@ export const updateTask = async (id, taskData) => {
       throw new Error(response.message);
     }
     
-    if (response.results) {
+if (response.results) {
       const successful = response.results.filter(r => r.success);
       if (successful.length > 0) {
         const task = successful[0].data;
@@ -280,17 +280,12 @@ export const updateTask = async (id, taskData) => {
           }
         };
       }
-};
-      }
     }
   } catch (error) {
     console.error("Error updating task:", error);
     throw error;
   }
 };
-
-export const updateTaskStatus = async (id, status) => {
-
 export const deleteTask = async (id) => {
   await delay(200);
   
