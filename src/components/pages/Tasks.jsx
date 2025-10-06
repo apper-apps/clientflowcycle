@@ -164,8 +164,10 @@ useEffect(() => {
     return currentTime - new Date(timer.startTime).getTime();
   };
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase());
+const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (task.createdBy && task.createdBy.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (task.assignedTo && task.assignedTo.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter;
     const matchesStatus = statusFilter === "all" || task.status === statusFilter;
     return matchesSearch && matchesPriority && matchesStatus;
@@ -627,8 +629,14 @@ if (loading) {
                           }`}>
                             {task.title}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+<p className="text-sm text-gray-600 dark:text-gray-400">
                             Project ID: {task.projectId}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Created by:</span> {task.createdBy}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Assigned to:</span> {task.assignedTo}
                           </p>
                         </div>
                         

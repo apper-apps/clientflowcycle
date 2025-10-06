@@ -1,44 +1,47 @@
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getAllTasks = async (page = 1, limit = 10) => {
-  await delay(200);
-  
   try {
     const { ApperClient } = window.ApperSDK;
+
     const apperClient = new ApperClient({
       apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
     });
     
+    
     const params = {
       fields: [
-        { field: { Name: "Name" } },
-        { field: { Name: "title" } },
-        { field: { Name: "priority" } },
-        { field: { Name: "status" } },
-        { field: { Name: "dueDate" } },
-        { field: { Name: "total_time" } },
-        { field: { Name: "active_timer_start_time" } },
-        { field: { Name: "project_id" } }
+        {"field": {"Name": "Id"}},
+        {"field": {"Name": "Name"}},
+        {"field": {"Name": "description"}},
+        {"field": {"Name": "status"}},
+        {"field": {"Name": "priority"}},
+        {"field": {"Name": "due_date"}},
+        {"field": {"Name": "project_id"}},
+        {"field": {"Name": "total_time"}},
+        {"field": {"Name": "created_by_user_id"}},
+        {"field": {"Name": "assigned_to"}}
       ],
       pagingInfo: {
         limit: limit,
         offset: (page - 1) * limit
       }
     };
-    
-    const response = await apperClient.fetchRecords('task', params);
+const response = await apperClient.fetchRecords('task', params);
     
     if (!response.success) {
       console.error(response.message);
-      throw new Error(response.message);
+      return { data: [], total: 0 };
     }
-    
-    // Map database field names to expected field names and add time tracking structure
-    const mappedTasks = (response.data || []).map(task => ({
-      ...task,
+
+    const transformedData = response.data?.map(task => ({
+      id: task.Id,
+      taskId: task.Id,
       title: task.title || task.Name,
       projectId: task.project_id?.toString(),
+      createdBy: task.created_by_user_id?.Name || 'Unknown',
+      assignedTo: task.assigned_to?.Name || 'Unassigned',
       timeTracking: {
         totalTime: task.total_time || 0,
         activeTimer: task.active_timer_start_time ? {
@@ -47,10 +50,10 @@ export const getAllTasks = async (page = 1, limit = 10) => {
         } : null,
         timeLogs: []
       }
-    }));
+}));
     
     return {
-      data: mappedTasks,
+      data: transformedData,
       total: response.total || 0,
       page: page,
       limit: limit,
@@ -63,25 +66,27 @@ export const getAllTasks = async (page = 1, limit = 10) => {
 };
 
 export const getTaskById = async (id) => {
-  await delay(150);
-  
   try {
     const { ApperClient } = window.ApperSDK;
+
     const apperClient = new ApperClient({
       apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
     });
+
     
     const params = {
       fields: [
-        { field: { Name: "Name" } },
-        { field: { Name: "title" } },
-        { field: { Name: "priority" } },
-        { field: { Name: "status" } },
-        { field: { Name: "dueDate" } },
-        { field: { Name: "total_time" } },
-        { field: { Name: "active_timer_start_time" } },
-        { field: { Name: "project_id" } }
+        {"field": {"Name": "Id"}},
+        {"field": {"Name": "Name"}},
+        {"field": {"Name": "description"}},
+        {"field": {"Name": "status"}},
+        {"field": {"Name": "priority"}},
+        {"field": {"Name": "due_date"}},
+        {"field": {"Name": "project_id"}},
+        {"field": {"Name": "total_time"}},
+        {"field": {"Name": "created_by_user_id"}},
+        {"field": {"Name": "assigned_to"}}
       ]
     };
     
@@ -95,8 +100,10 @@ export const getTaskById = async (id) => {
     const task = response.data;
     return {
       ...task,
-      title: task.title || task.Name,
+title: task.title || task.Name,
       projectId: task.project_id?.toString(),
+      createdBy: task.created_by_user_id?.Name || 'Unknown',
+      assignedTo: task.assigned_to?.Name || 'Unassigned',
       timeTracking: {
         totalTime: task.total_time || 0,
         activeTimer: task.active_timer_start_time ? {

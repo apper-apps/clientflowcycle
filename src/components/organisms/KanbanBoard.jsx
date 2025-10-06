@@ -263,9 +263,19 @@ const KanbanBoard = ({ tasks, onTaskUpdate, projectId = null }) => {
                                   </Button>
                                 </div>
 
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
+<div className="text-xs text-gray-500 dark:text-gray-400">
                                   Project: {task.projectId}
                                 </div>
+                                {task.assignedTo && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    Assigned: {task.assignedTo}
+                                  </div>
+                                )}
+                                {task.createdBy && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    Created by: {task.createdBy}
+                                  </div>
+                                )}
                               </div>
                             </Card>
                           </div>
