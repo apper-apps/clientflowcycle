@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
-import Card from "@/components/atoms/Card";
-import Empty from "@/components/ui/Empty";
-import Error from "@/components/ui/Error";
-import Loading from "@/components/ui/Loading";
 import SearchBar from "@/components/molecules/SearchBar";
 import ClientModal from "@/components/molecules/ClientModal";
+import Error from "@/components/ui/Error";
+import Empty from "@/components/ui/Empty";
+import Loading from "@/components/ui/Loading";
+import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
+import Button from "@/components/atoms/Button";
 import { getAllClients } from "@/services/api/clientService";
 
 const Clients = () => {
@@ -19,8 +19,9 @@ const Clients = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [showModal, setShowModal] = useState(false);
-const loadClients = async () => {
+const [showModal, setShowModal] = useState(false);
+  
+  const loadClients = async () => {
     try {
       setLoading(true);
       setError("");
@@ -48,14 +49,13 @@ const loadClients = async () => {
   }, []);
 
 // Helper function to safely get string value from field (handles lookup objects)
-  const getFieldValue = (field) => {
+const getFieldValue = (field) => {
     if (!field) return '';
     // If it's a lookup object with Name property, extract it
     if (typeof field === 'object' && field.Name) return field.Name;
     // Otherwise return the field value directly
-    return String(field);
+return String(field);
   };
-
   const filteredClients = clients.filter(client =>
     getFieldValue(client.Name).toLowerCase().includes(searchTerm.toLowerCase()) ||
     getFieldValue(client.email).toLowerCase().includes(searchTerm.toLowerCase()) ||

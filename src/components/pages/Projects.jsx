@@ -83,11 +83,14 @@ const getClientName = (clientId) => {
     
     // Handle lookup field objects - extract Name property if it's an object
     const clientName = client.Name || client.name;
-    if (typeof clientName === 'object' && clientName?.Name) {
-      return clientName.Name;
+    
+    // If clientName is an object with Name property, extract it
+    if (typeof clientName === 'object' && clientName !== null) {
+      return clientName.Name || `Client ID: ${clientId}`;
     }
     
-    return clientName || `Client ID: ${clientId}`;
+    // Return string value or fallback
+    return String(clientName || `Client ID: ${clientId}`);
   };
 
   const filteredProjects = projects.filter(project => {
