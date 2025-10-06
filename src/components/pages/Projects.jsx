@@ -79,7 +79,15 @@ const handleProjectSubmit = async (projectData) => {
 
 const getClientName = (clientId) => {
     const client = clients.find(c => c.Id === parseInt(clientId));
-    return client ? (client.Name || client.name) : `Client ID: ${clientId}`;
+    if (!client) return `Client ID: ${clientId}`;
+    
+    // Handle lookup field objects - extract Name property if it's an object
+    const clientName = client.Name || client.name;
+    if (typeof clientName === 'object' && clientName?.Name) {
+      return clientName.Name;
+    }
+    
+    return clientName || `Client ID: ${clientId}`;
   };
 
   const filteredProjects = projects.filter(project => {

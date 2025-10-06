@@ -47,10 +47,19 @@ const loadClients = async () => {
     loadClients();
   }, []);
 
-const filteredClients = clients.filter(client =>
-    (client.Name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.company ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+// Helper function to safely get string value from field (handles lookup objects)
+  const getFieldValue = (field) => {
+    if (!field) return '';
+    // If it's a lookup object with Name property, extract it
+    if (typeof field === 'object' && field.Name) return field.Name;
+    // Otherwise return the field value directly
+    return String(field);
+  };
+
+  const filteredClients = clients.filter(client =>
+    getFieldValue(client.Name).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    getFieldValue(client.email).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    getFieldValue(client.company).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -156,43 +165,43 @@ if (clients.length === 0) {
       >
         {filteredClients.map((client, index) => (
           <motion.div
-            key={client.Id}
+key={client.Id}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
 >
             <div
-              onClick={() => handleClientClick(client.Id)}
+onClick={() => handleClientClick(client.Id)}
               className="cursor-pointer"
             >
               <Card hover className="p-6 h-full transition-all duration-200 hover:shadow-lg">
                 <div className="flex items-start justify-between mb-4">
 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
-                      {(client.Name ?? 'U').charAt(0).toUpperCase()}
+{(getFieldValue(client.Name) || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                        {client.Name ?? 'Unknown'}
+<h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                        {getFieldValue(client.Name) || 'Unknown'}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                        {client.company ?? 'No Company'}
+                        {getFieldValue(client.company) || 'No Company'}
                       </p>
                     </div>
                   </div>
                   
-                  <Badge variant={client.status === "active" ? "success" : "secondary"}>
-                    {client.status}
+<Badge variant={getFieldValue(client.status) === "active" ? "success" : "secondary"}>
+                    {getFieldValue(client.status)}
                   </Badge>
                 </div>
                 
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <ApperIcon name="Mail" size={14} />
-                    <span className="truncate">{client.email}</span>
+                    <span className="truncate">{getFieldValue(client.email)}</span>
                   </div>
                   
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+<div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <ApperIcon name="Calendar" size={14} />
                     <span>Client since {new Date(client.createdAt).toLocaleDateString()}</span>
                   </div>
@@ -204,7 +213,7 @@ if (clients.length === 0) {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.location.href = `mailto:${client.email ?? ''}`;
+                      window.location.href = `mailto:${getFieldValue(client.email)}`;
                     }}
                   >
                     <ApperIcon name="MessageSquare" size={14} className="mr-2" />
@@ -212,7 +221,7 @@ if (clients.length === 0) {
                   </Button>
                   
                   <div className="flex items-center gap-2">
-                    <Button 
+<Button 
                       variant="ghost" 
                       size="sm"
                       onClick={(e) => {
