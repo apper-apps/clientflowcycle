@@ -58,7 +58,7 @@ const KanbanBoard = ({ tasks, onTaskUpdate, projectId = null }) => {
     return new Date(dueDate) < new Date();
   };
 
-  const handleDragStart = (start) => {
+const handleDragStart = (start) => {
     const task = filteredTasks.find(t => t.Id === parseInt(start.draggableId));
     setDraggedTask(task);
   };
@@ -73,13 +73,26 @@ const KanbanBoard = ({ tasks, onTaskUpdate, projectId = null }) => {
 
     const taskId = parseInt(draggableId);
     const newStatus = destination.droppableId;
+    
+    // Get the task to check ownership
+    const task = filteredTasks.find(t => t.Id === taskId);
+    
+    // Get current user from Redux store
+    const state = window.__REDUX_STORE__?.getState();
+    const currentUser = state?.user?.user;
+    
+    // Check if current user owns the task
+    if (task && task.createdByUserId !== currentUser?.userId) {
+      toast.error("You can only update status for your own tasks");
+      return;
+    }
 
     try {
       await updateTaskStatus(taskId, newStatus);
       onTaskUpdate && onTaskUpdate();
       toast.success("Task status updated successfully");
     } catch (error) {
-      toast.error("Failed to update task status");
+      toast.error(error.message || "Failed to update task status");
     }
 };
 

@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import KanbanBoard from "@/components/organisms/KanbanBoard";
+import { useSelector } from "react-redux";
 import ApperIcon from "@/components/ApperIcon";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
-import Card from "@/components/atoms/Card";
-import Modal from "@/components/atoms/Modal";
-import Input from "@/components/atoms/Input";
-import Empty from "@/components/ui/Empty";
-import Error from "@/components/ui/Error";
-import Loading from "@/components/ui/Loading";
 import SearchBar from "@/components/molecules/SearchBar";
-import { getAllTasks, updateTask, deleteTask, createTask } from "@/services/api/taskService";
-import { startTimer, stopTimer } from "@/services/api/timeTrackingService";
+import Error from "@/components/ui/Error";
+import Empty from "@/components/ui/Empty";
+import Loading from "@/components/ui/Loading";
+import KanbanBoard from "@/components/organisms/KanbanBoard";
+import Modal from "@/components/atoms/Modal";
+import Badge from "@/components/atoms/Badge";
+import Input from "@/components/atoms/Input";
+import Card from "@/components/atoms/Card";
+import Button from "@/components/atoms/Button";
+import { createTask, deleteTask, getAllTasks, updateTask } from "@/services/api/taskService";
 import { getAllProjects } from "@/services/api/projectService";
+import { startTimer, stopTimer } from "@/services/api/timeTrackingService";
 
 const Tasks = () => {
 const [tasks, setTasks] = useState([]);
@@ -27,6 +28,8 @@ const [tasks, setTasks] = useState([]);
   const [activeTimers, setActiveTimers] = useState(new Map());
   const [currentTime, setCurrentTime] = useState(Date.now());
   
+  // Get current user from Redux for ownership checks
+  const currentUser = useSelector((state) => state.user?.user);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -211,7 +214,14 @@ const getStatusIcon = (status) => {
     return icons[status] || "Circle";
 };
 
-  const handleEditTask = (task) => {
+const handleEditTask = (task) => {
+    // Check if current user owns the task
+    if (task.createdByUserId !== currentUser?.userId) {
+      toast.error("You can only edit your own tasks");
+      setDropdownOpen(null);
+      return;
+    }
+    
     setSelectedTask(task);
     setEditFormData({
       title: task.title,
@@ -224,6 +234,13 @@ const getStatusIcon = (status) => {
   };
 
   const handleDeleteTask = (task) => {
+    // Check if current user owns the task
+    if (task.createdByUserId !== currentUser?.userId) {
+      toast.error("You can only delete your own tasks");
+      setDropdownOpen(null);
+      return;
+    }
+    
     setSelectedTask(task);
     setDeleteModalOpen(true);
     setDropdownOpen(null);
@@ -674,13 +691,15 @@ className="flex items-center gap-1"
                         </div>
                         
 <div className="flex items-center gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleEditTask(task)}
-                          >
-                            <ApperIcon name="Edit2" size={14} />
-                          </Button>
+                          {task.createdByUserId === currentUser?.userId && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditTask(task)}
+                            >
+                              <ApperIcon name="Edit2" size={14} />
+                            </Button>
+                          )}
                           <div className="relative">
                             <Button 
                               variant="ghost" 
@@ -702,16 +721,18 @@ className="flex items-center gap-1"
                                     <ApperIcon name="Eye" size={14} />
                                     View Details
                                   </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEditTask(task);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                  >
-                                    <ApperIcon name="Edit2" size={14} />
-                                    Edit Task
-                                  </button>
+{task.createdByUserId === currentUser?.userId && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditTask(task);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                    >
+                                      <ApperIcon name="Edit2" size={14} />
+                                      Edit Task
+                                    </button>
+                                  )}
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -722,17 +743,21 @@ className="flex items-center gap-1"
                                     <ApperIcon name="Copy" size={14} />
                                     Duplicate
                                   </button>
-                                  <hr className="my-1 border-gray-200 dark:border-gray-600" />
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteTask(task);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                                  >
-                                    <ApperIcon name="Trash2" size={14} />
-                                    Delete Task
-                                  </button>
+{task.createdByUserId === currentUser?.userId && (
+                                    <>
+                                      <hr className="my-1 border-gray-200 dark:border-gray-600" />
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteTask(task);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                                      >
+                                        <ApperIcon name="Trash2" size={14} />
+                                        Delete Task
+</button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -1225,23 +1250,25 @@ disabled={!addTaskFormData.title.trim() || !addTaskFormData.projectId}
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-4">
+<div className="flex justify-end gap-3 pt-4">
               <Button
                 variant="outline"
                 onClick={() => setViewDetailsModalOpen(false)}
               >
                 Close
               </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setViewDetailsModalOpen(false);
-                  handleEditTask(selectedTask);
-                }}
-              >
-                <ApperIcon name="Edit2" size={14} className="mr-2" />
-                Edit Task
-              </Button>
+              {selectedTask?.createdByUserId === currentUser?.userId && (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setViewDetailsModalOpen(false);
+                    handleEditTask(selectedTask);
+                  }}
+                >
+                  <ApperIcon name="Edit2" size={14} className="mr-2" />
+                  Edit Task
+                </Button>
+              )}
             </div>
           </div>
         )}

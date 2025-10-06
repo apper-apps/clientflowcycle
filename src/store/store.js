@@ -6,3 +6,10 @@ export const store = configureStore({
     user: userReducer,
   },
 });
+
+// Make store globally available for service layer access
+if (typeof window !== 'undefined') {
+  window.__REDUX_STORE__ = store;
+}
+
+export default store;

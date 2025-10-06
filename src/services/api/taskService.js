@@ -1,3 +1,6 @@
+import React from "react";
+import Error from "@/components/ui/Error";
+import { deleteRecord } from "@/services/api/notificationService";
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
@@ -47,13 +50,14 @@ const response = await apperClient.fetchRecords('task', params);
       console.error(response.message);
       return { data: [], total: 0 };
     }
-
+    
     const transformedData = response.data?.map(task => ({
       id: task.Id,
       taskId: task.Id,
       title: task.title || task.Name,
       projectId: task.project_id?.toString(),
       createdBy: task.created_by_user_id?.Name || 'Unknown',
+      createdByUserId: task.created_by_user_id?.Id,
       assignedTo: task.assigned_to?.Name || 'Unassigned',
       timeTracking: {
         totalTime: task.total_time || 0,
@@ -87,8 +91,7 @@ export const getTaskById = async (id) => {
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
     });
 
-    
-    const params = {
+const params = {
       fields: [
         {"field": {"Name": "Id"}},
         {"field": {"Name": "Name"}},
@@ -103,11 +106,11 @@ export const getTaskById = async (id) => {
       ]
     };
     
-    const response = await apperClient.getRecordById('task', parseInt(id), params);
+    const response = await apperClient.getRecordById('task', id, params);
     
     if (!response.success) {
       console.error(response.message);
-      throw new Error(response.message);
+      return null;
     }
     
     const task = response.data;
@@ -116,6 +119,7 @@ export const getTaskById = async (id) => {
 title: task.title || task.Name,
       projectId: task.project_id?.toString(),
       createdBy: task.created_by_user_id?.Name || 'Unknown',
+      createdByUserId: task.created_by_user_id?.Id,
       assignedTo: task.assigned_to?.Name || 'Unassigned',
       timeTracking: {
         totalTime: task.total_time || 0,
@@ -205,15 +209,47 @@ export const updateTask = async (id, taskData) => {
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
     });
     
-    // Only include updateable fields
+    // First, get the current task to check ownership
+    const currentTask = await getTaskById(id);
+    if (!currentTask) {
+      throw new Error("Task not found");
+    }
+    
+    // Get current user from Redux store
+    const state = window.__REDUX_STORE__?.getState();
+    const currentUser = state?.user?.user;
+    
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    // Check if current user is the creator
+    if (currentTask.createdByUserId !== currentUser.userId) {
+      throw new Error("You can only edit your own tasks");
+    }
+    
     const updateData = {
       Id: parseInt(id)
     };
     
-    if (taskData.title) updateData.title = taskData.title;
-    if (taskData.priority) updateData.priority = taskData.priority;
-    if (taskData.status) updateData.status = taskData.status;
-    if (taskData.dueDate) updateData.dueDate = taskData.dueDate;
+    if (taskData.title !== undefined) {
+      updateData.title = taskData.title;
+    }
+    if (taskData.description !== undefined) {
+      updateData.description = taskData.description;
+    }
+    if (taskData.status !== undefined) {
+      updateData.status = taskData.status;
+    }
+    if (taskData.priority !== undefined) {
+      updateData.priority = taskData.priority;
+    }
+    if (taskData.dueDate !== undefined) {
+      updateData.due_date = taskData.dueDate;
+    }
+    if (taskData.projectId !== undefined) {
+      updateData.project_id = parseInt(taskData.projectId);
+    }
     
     const params = {
       records: [updateData]
@@ -227,34 +263,25 @@ export const updateTask = async (id, taskData) => {
     }
     
     if (response.results) {
-      const failedRecords = response.results.filter(result => !result.success);
-      
-      if (failedRecords.length > 0) {
-        console.error(`Failed to update ${failedRecords.length} records:${JSON.stringify(failedRecords)}`);
-        
-        failedRecords.forEach(record => {
-          record.errors?.forEach(error => {
-            throw new Error(`${error.fieldLabel}: ${error.message}`);
-          });
-          if (record.message) throw new Error(record.message);
-        });
+      const successful = response.results.filter(r => r.success);
+      if (successful.length > 0) {
+        const task = successful[0].data;
+        return {
+          ...task,
+          title: task.title || task.Name,
+          projectId: task.project_id?.toString(),
+          timeTracking: {
+            totalTime: task.total_time || 0,
+            activeTimer: task.active_timer_start_time ? {
+              Id: task.Id,
+              startTime: task.active_timer_start_time
+            } : null,
+            timeLogs: []
+          }
+        };
       }
-      
-      const successfulRecords = response.results.filter(result => result.success);
-      const task = successfulRecords[0]?.data;
-      return {
-        ...task,
-        title: task.title || task.Name,
-        projectId: task.project_id?.toString(),
-        timeTracking: {
-          totalTime: task.total_time || 0,
-          activeTimer: task.active_timer_start_time ? {
-            Id: task.Id,
-            startTime: task.active_timer_start_time
-          } : null,
-          timeLogs: []
-        }
-      };
+};
+      }
     }
   } catch (error) {
     console.error("Error updating task:", error);
@@ -263,8 +290,6 @@ export const updateTask = async (id, taskData) => {
 };
 
 export const updateTaskStatus = async (id, status) => {
-  return updateTask(id, { status });
-};
 
 export const deleteTask = async (id) => {
   await delay(200);
@@ -275,6 +300,25 @@ export const deleteTask = async (id) => {
       apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
     });
+    
+    // First, get the current task to check ownership
+    const currentTask = await getTaskById(id);
+    if (!currentTask) {
+      throw new Error("Task not found");
+    }
+    
+    // Get current user from Redux store
+    const state = window.__REDUX_STORE__?.getState();
+    const currentUser = state?.user?.user;
+    
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    // Check if current user is the creator
+    if (currentTask.createdByUserId !== currentUser.userId) {
+      throw new Error("You can only delete your own tasks");
+    }
     
     const params = {
       RecordIds: [parseInt(id)]
@@ -307,7 +351,7 @@ export const deleteTask = async (id) => {
 };
 
 export const startTaskTimer = async (id) => {
-  await delay(200);
+await delay(200);
   
   try {
     const { ApperClient } = window.ApperSDK;
@@ -315,6 +359,23 @@ export const startTaskTimer = async (id) => {
       apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
     });
+    
+    // Check ownership before starting timer
+    const currentTask = await getTaskById(id);
+    if (!currentTask) {
+      throw new Error("Task not found");
+    }
+    
+    const state = window.__REDUX_STORE__?.getState();
+    const currentUser = state?.user?.user;
+    
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    if (currentTask.createdByUserId !== currentUser.userId) {
+      throw new Error("You can only start timers for your own tasks");
+    }
     
     const now = new Date().toISOString();
     
@@ -346,7 +407,7 @@ export const stopTaskTimer = async (id) => {
   await delay(200);
   
   try {
-    const { ApperClient } = window.ApperSDK;
+const { ApperClient } = window.ApperSDK;
     const apperClient = new ApperClient({
       apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
       apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
@@ -357,6 +418,18 @@ export const stopTaskTimer = async (id) => {
     
     if (!task.timeTracking?.activeTimer) {
       throw new Error("No active timer for this task");
+    }
+    
+    // Check ownership before stopping timer
+    const state = window.__REDUX_STORE__?.getState();
+    const currentUser = state?.user?.user;
+    
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    if (task.createdByUserId !== currentUser.userId) {
+      throw new Error("You can only stop timers for your own tasks");
     }
     
     const now = new Date().toISOString();
