@@ -1,5 +1,18 @@
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * DATA ACCESS POLICY: Task Visibility
+ * 
+ * All authenticated users can view ALL tasks in the system, regardless of who created them.
+ * This policy promotes transparency and collaboration across the team.
+ * 
+ * - No user-specific WHERE conditions are applied
+ * - Both 'created_by_user_id' and 'assigned_to' fields are retrieved and displayed
+ * - Authentication is automatically handled by ApperClient SDK
+ * - Row-level security (if needed) should be configured at the database/platform level
+ * 
+ * This is an intentional design decision, not a security oversight.
+ */
 export const getAllTasks = async (page = 1, limit = 10) => {
   try {
     const { ApperClient } = window.ApperSDK;
