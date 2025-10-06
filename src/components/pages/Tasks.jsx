@@ -651,10 +651,10 @@ if (loading) {
                           
                           <Badge 
                             variant={getStatusVariant(task.status)}
-                            className="flex items-center gap-1"
+className="flex items-center gap-1"
                           >
                             <ApperIcon name={getStatusIcon(task.status)} size={12} />
-                            {task.status.replace("-", " ")}
+                            {task.status?.replace("-", " ") || "No Status"}
                           </Badge>
                         </div>
 </div>
@@ -1175,13 +1175,13 @@ disabled={!addTaskFormData.title.trim() || !addTaskFormData.projectId}
               <div>
                 <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                   Status
-                </label>
+</label>
                 <Badge 
                   variant={getStatusVariant(selectedTask.status)}
                   className="flex items-center gap-1 w-fit"
                 >
                   <ApperIcon name={getStatusIcon(selectedTask.status)} size={12} />
-                  {selectedTask.status.replace("-", " ")}
+                  {selectedTask.status?.replace("-", " ") || "No Status"}
                 </Badge>
               </div>
 
